@@ -1,8 +1,8 @@
 # strategery
 Stretego board game clone written in elm.
 
-This is practice app, to help me learn Elm.
+This is a practice app, to help me learn Elm.
 
-To comiple:
+To compile:
 
 elm-make src/strategery.elm --output ../public/index.html
