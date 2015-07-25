@@ -3,11 +3,23 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Array exposing (..)
 
+type alias Model = List Int
+
+initBoard : Model
+initBoard = 
+        [ 4,5,6,3,
+          0,0,0,0,
+          0,0,0,0,
+          0,0,0,0,
+          6,5,4,3 ]
+
+{-
 model = [ 4,5,6,3,
           0,0,0,0,
           0,0,0,0,
           0,0,0,0,
           6,5,4,3 ]
+-}
           
 columns = 4
 rows = 5
@@ -28,8 +40,10 @@ main =
     ( 
       (drawCols [0..columns]) ++ 
       (drawRows [0..rows]) ++
-      (placePieces model)
+      (placePieces initBoard)
     )
+    
+-- view model =
 
 -- make a path for the given column grid-line number  
 getCol : Int -> Path
