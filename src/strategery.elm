@@ -12,14 +12,6 @@ initBoard =
           0,0,0,0,
           0,0,0,0,
           6,5,4,3 ]
-
-{-
-model = [ 4,5,6,3,
-          0,0,0,0,
-          0,0,0,0,
-          0,0,0,0,
-          6,5,4,3 ]
--}
           
 columns = 4
 rows = 5
@@ -36,14 +28,16 @@ rowHeight = boardHeight // rows
 rowSpacing = rowHeight // 2
 
 main =
+  view initBoard
+
+view : Model -> Element    
+view model =
   collage boardWidth boardHeight
     ( 
       (drawCols [0..columns]) ++ 
       (drawRows [0..rows]) ++
-      (placePieces initBoard)
+      (placePieces model)
     )
-    
--- view model =
 
 -- make a path for the given column grid-line number  
 getCol : Int -> Path
