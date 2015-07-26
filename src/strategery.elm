@@ -2,6 +2,7 @@ import Color exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Array exposing (..)
+import Mouse
 
 type alias Model = List Int
 
@@ -27,8 +28,15 @@ rowMax = (boardHeight//2)
 rowHeight = boardHeight // rows
 rowSpacing = rowHeight // 2
 
+-- foldp func(anyType, stateObj, stateObj) state signal
+-- create a signal of Models with foldp, which is maped to the view function
 main =
-  view initBoard
+  Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
+  --Signal.map update (Signal.sampleOn Mouse.clicks Mouse.position)
+  
+update : (Int,Int) -> Model -> Model
+update mousePosition  model = List.reverse model
+  
 
 view : Model -> Element    
 view model =
