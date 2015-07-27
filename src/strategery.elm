@@ -32,7 +32,6 @@ rowSpacing = rowHeight // 2
 -- create a signal of Models with foldp, which is maped to the view function
 main =
   Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
-  --Signal.map update (Signal.sampleOn Mouse.clicks Mouse.position)
   
 update : (Int,Int) -> Model -> Model
 update mousePosition  model = List.reverse model
@@ -46,6 +45,16 @@ view model =
       (drawRows [0..rows]) ++
       (placePieces model)
     )
+    
+-- Figure out which square was clicked, basically translate mouse coords to grid coords
+spaceClicked : (Int, Int) -> (Int, Int)
+spaceClicked  (x,y) =
+  (x//columnWidth, y//rowHeight)
+  
+gridCoordsToModelIndex : (Int, Int) -> Int
+gridCoordsToModelIndex (column, row) = 
+  row * columns + column
+  
 
 -- make a path for the given column grid-line number  
 getCol : Int -> Path
