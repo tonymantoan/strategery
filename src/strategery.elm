@@ -4,15 +4,23 @@ import Graphics.Element exposing (..)
 import Array exposing (..)
 import Mouse
 
-type alias Model = List Int
+type alias Model =
+  { pieceIsSelected : Bool
+    , selectedPieceIndex : Int
+    , pieces : List Int
+  }
 
 initBoard : Model
 initBoard = 
+  { pieceIsSelected = False
+    , selectedPieceIndex = 0
+    , pieces =
         [ 4,5,6,3,
           0,0,0,0,
           0,0,0,0,
           0,0,0,0,
           6,5,4,3 ]
+  }
           
 columns = 4
 rows = 5
@@ -34,8 +42,7 @@ main =
   Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
   
 update : (Int,Int) -> Model -> Model
-update mousePosition  model = List.reverse model
-  
+update mousePosition  model = { model | pieces <- (List.reverse model.pieces) }
 
 view : Model -> Element    
 view model =
@@ -43,7 +50,7 @@ view model =
     ( 
       (drawCols [0..columns]) ++ 
       (drawRows [0..rows]) ++
-      (placePieces model)
+      (placePieces model.pieces)
     )
     
 -- Figure out which square was clicked, basically translate mouse coords to grid coords
