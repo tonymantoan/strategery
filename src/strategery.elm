@@ -31,8 +31,8 @@ columnMax = boardWidth // 2
 columnWidth = boardWidth // columns
 columnSpacing = columnWidth // 2
 
-rowMin = (boardHeight//2) * -1
-rowMax = (boardHeight//2)
+rowMin = (boardHeight//2)
+rowMax = (boardHeight//2) * -1
 rowHeight = boardHeight // rows
 rowSpacing = rowHeight // 2
 
@@ -114,8 +114,8 @@ drawCols colNums =
 getRow : Int -> Path
 getRow rowNum =
   path [
-         (,) (toFloat columnMin) (toFloat (rowMin + rowHeight * rowNum))
-        ,(,) (toFloat columnMax) (toFloat (rowMin + rowHeight * rowNum))
+         (,) (toFloat columnMin) (toFloat (rowMin - rowHeight * rowNum))
+        ,(,) (toFloat columnMax) (toFloat (rowMin - rowHeight * rowNum))
        ]
        
 -- For each row number, create a Form from a Path
@@ -154,7 +154,7 @@ calcX: Int -> Int
 calcX columnNo  = columnMin + (columnNo * columnWidth + columnSpacing)
 
 -- calculate the y coordinate for piece based on its row number and board geometry
-calcY rowNo = rowMin + (rowNo * rowHeight + rowSpacing)
+calcY rowNo = rowMin - (rowNo * rowHeight + rowSpacing)
 
   
 placePieces: List Int -> List Form
