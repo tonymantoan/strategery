@@ -42,7 +42,24 @@ main =
   Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
   
 update : (Int,Int) -> Model -> Model
-update mousePosition  model = { model | pieces <- (List.reverse model.pieces) }
+update mousePosition  model =
+  if model.pieceIsSelected == False then
+    -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
+    markSelected  (gridCoordsToModelIndex (spaceClicked mousePosition)) model
+  else
+    -- if a piece is already selected: get the clicked pice this time, mark the other space as 0, make this space = the higher of the two
+    let selected = gridCoordsToModelIndex (spaceClicked mousePosition)
+        firstSelectedValue = getValueAt  model.selectedPieceIndex model.pieces
+        thisSelectionsValue = getValueAt  (gridCoordsToModelIndex (spaceClicked mousePosition)) model.pieces
+    in
+        case firstSelectedValue of
+          Nothing -> model
+          
+          Just n ->
+            updatePieces model.selectedPieceIndex 0 model
+            |> updatePieces selected n
+    
+    --{ model | pieces <- (List.reverse model.pieces) }
 
 view : Model -> Element    
 view model =
@@ -52,6 +69,22 @@ view model =
       (drawRows [0..rows]) ++
       (placePieces model.pieces)
     )
+    
+updatePieces : Int -> Int -> Model -> Model
+updatePieces index value model =
+  {model | pieces <- ((List.take index model.pieces) ++ [value] ++ (List.drop (index+1) model.pieces))}
+  
+-- TODO: not thrilled about this function, maybe the pieces should be in an array instead of list
+getValueAt : Int -> List Int -> Maybe Int
+getValueAt index list =
+  List.head (List.drop index list)
+    
+-- mark the given index as the selected piece
+markSelected : Int -> Model -> Model
+markSelected index model =
+   { model | pieceIsSelected <- True
+           , selectedPieceIndex <- index }
+
     
 -- Figure out which square was clicked, basically translate mouse coords to grid coords
 spaceClicked : (Int, Int) -> (Int, Int)
