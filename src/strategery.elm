@@ -50,8 +50,8 @@ update mousePosition  model =
   else
     -- if a piece is already selected: get the clicked pice this time, mark the other space as 0, make this space = the higher of the two
     let selected = gridCoordsToModelIndex (spaceClicked mousePosition)
-        attacker = getValueAt  model.selectedPieceIndex model.pieces
-        defender = getValueAt  (gridCoordsToModelIndex (spaceClicked mousePosition)) model.pieces
+        attacker = Array.get model.selectedPieceIndex (Array.fromList model.pieces)  
+        defender = Array.get (gridCoordsToModelIndex (spaceClicked mousePosition)) (Array.fromList model.pieces)
     in
         case attacker of
           Nothing -> model
@@ -89,12 +89,6 @@ attack attacker defender index model =
   if | attacker > defender -> updatePieces index attacker model
      | defender > attacker -> updatePieces index defender model
      | otherwise -> updatePieces index 0 model
-  
--- TODO: not thrilled about this function, maybe the pieces should be in an array instead of list
--- Just go back to using the array functions and get rid of this
-getValueAt : Int -> List Int -> Maybe Int
-getValueAt index list =
-  List.head (List.drop index list)
     
 -- mark the given index as the selected piece
 markSelected : Int -> Model -> Model
