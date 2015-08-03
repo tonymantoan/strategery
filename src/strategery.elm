@@ -40,7 +40,8 @@ rowSpacing = rowHeight // 2
 -- create a signal of Models with foldp, which is maped to the view function
 main =
   Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
-  
+
+-- TODO: reset piece selected after a piece has been moved  
 update : (Int,Int) -> Model -> Model
 update mousePosition  model =
   if model.pieceIsSelected == False then
@@ -49,15 +50,20 @@ update mousePosition  model =
   else
     -- if a piece is already selected: get the clicked pice this time, mark the other space as 0, make this space = the higher of the two
     let selected = gridCoordsToModelIndex (spaceClicked mousePosition)
-        firstSelectedValue = getValueAt  model.selectedPieceIndex model.pieces
-        thisSelectionsValue = getValueAt  (gridCoordsToModelIndex (spaceClicked mousePosition)) model.pieces
+        attacker = getValueAt  model.selectedPieceIndex model.pieces
+        defender = getValueAt  (gridCoordsToModelIndex (spaceClicked mousePosition)) model.pieces
     in
-        case firstSelectedValue of
+        case attacker of
           Nothing -> model
           
           Just n ->
-            updatePieces model.selectedPieceIndex 0 model
-            |> updatePieces selected n
+            case defender of
+              Nothing -> model
+              
+              Just m ->
+                updatePieces model.selectedPieceIndex 0 model
+                |> attack n m selected 
+                |> resetPieceSelected
     
     --{ model | pieces <- (List.reverse model.pieces) }
 
@@ -74,7 +80,18 @@ updatePieces : Int -> Int -> Model -> Model
 updatePieces index value model =
   {model | pieces <- ((List.take index model.pieces) ++ [value] ++ (List.drop (index+1) model.pieces))}
   
+resetPieceSelected : Model -> Model
+resetPieceSelected model =
+  { model | pieceIsSelected <- False }
+   
+attack : Int -> Int -> Int -> Model -> Model
+attack attacker defender index model =
+  if | attacker > defender -> updatePieces index attacker model
+     | defender > attacker -> updatePieces index defender model
+     | otherwise -> updatePieces index 0 model
+  
 -- TODO: not thrilled about this function, maybe the pieces should be in an array instead of list
+-- Just go back to using the array functions and get rid of this
 getValueAt : Int -> List Int -> Maybe Int
 getValueAt index list =
   List.head (List.drop index list)
