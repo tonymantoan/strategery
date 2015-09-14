@@ -3,23 +3,41 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Array exposing (..)
 import Mouse
+import Text
+
+type alias Piece =
+  { id : Int
+    , coord : (Int, Int)
+    , value : Int
+    , color : Color
+    , inPlay : Bool
+  }
 
 type alias Model =
   { pieceIsSelected : Bool
-    , selectedPieceIndex : Int
-    , pieces : List Int
+    , selectedPieceCoord : (Int, Int)
+    , pieces : List Piece
   }
+  
+-- TODO: automatically increment the pieceId
+makePiece : Int -> (Int, Int) -> Int -> Color -> Piece
+makePiece pid location val col =
+  { id = pid
+    ,coord = location
+    , value = val
+    , color = col
+    , inPlay = True
+  }
+  
+blues = [ (makePiece 1 (0,0) 4 blue), (makePiece 2 (1,0) 5 blue), (makePiece 3 (2,0) 6 blue), (makePiece 4 (3,0) 3 blue) ]
+
+reds = [ (makePiece 5 (0,4) 4 red), (makePiece 6 (1,4) 5 red), (makePiece 7 (2,4) 6 red), (makePiece 8 (3,4) 3 red) ]
 
 initBoard : Model
 initBoard = 
   { pieceIsSelected = False
-    , selectedPieceIndex = 0
-    , pieces =
-        [ 4,5,6,3,
-          0,0,0,0,
-          0,0,0,0,
-          0,0,0,0,
-          6,5,4,3 ]
+    , selectedPieceCoord = (0,0)
+    , pieces = blues ++ reds
   }
           
 columns = 4
@@ -41,17 +59,17 @@ rowSpacing = rowHeight // 2
 main =
   Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
 
--- TODO: reset piece selected after a piece has been moved  
+-- TODO: Is that nested case the only way to do this?  
 update : (Int,Int) -> Model -> Model
 update mousePosition  model =
   if model.pieceIsSelected == False then
     -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
-    markSelected  (gridCoordsToModelIndex (spaceClicked mousePosition)) model
+    markSelected  (spaceClicked mousePosition) model
   else
-    -- if a piece is already selected: get the clicked pice this time, mark the other space as 0, make this space = the higher of the two
-    let selected = gridCoordsToModelIndex (spaceClicked mousePosition)
-        attacker = Array.get model.selectedPieceIndex (Array.fromList model.pieces)  
-        defender = Array.get (gridCoordsToModelIndex (spaceClicked mousePosition)) (Array.fromList model.pieces)
+    -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
+    let selected = (spaceClicked mousePosition)
+        attacker = getPieceByLocation model.pieces model.selectedPieceCoord 
+        defender = getPieceByLocation model.pieces selected
     in
         case attacker of
           Nothing -> model
@@ -61,11 +79,8 @@ update mousePosition  model =
               Nothing -> model
               
               Just m ->
-                updatePieces model.selectedPieceIndex 0 model
-                |> attack n m selected 
+                attack n m model 
                 |> resetPieceSelected
-    
-    --{ model | pieces <- (List.reverse model.pieces) }
 
 view : Model -> Element    
 view model =
@@ -75,26 +90,43 @@ view model =
       (drawRows [0..rows]) ++
       (placePieces model.pieces)
     )
-    
-updatePieces : Int -> Int -> Model -> Model
-updatePieces index value model =
-  {model | pieces <- ((List.take index model.pieces) ++ [value] ++ (List.drop (index+1) model.pieces))}
-  
+
+updatePieces :  Piece -> Model -> Model
+updatePieces piece model =
+  -- Make a new list with the old piece filtered out, then append the new piece
+  {model | pieces <- [piece] ++ (List.filter (\n -> if n.id == piece.id then False else True) model.pieces)}
+
 resetPieceSelected : Model -> Model
 resetPieceSelected model =
   { model | pieceIsSelected <- False }
-   
-attack : Int -> Int -> Int -> Model -> Model
-attack attacker defender index model =
-  if | attacker > defender -> updatePieces index attacker model
-     | defender > attacker -> updatePieces index defender model
-     | otherwise -> updatePieces index 0 model
-    
--- mark the given index as the selected piece
-markSelected : Int -> Model -> Model
-markSelected index model =
+
+-- TODO: Proper game logic:
+attack : Piece -> Piece -> Model -> Model
+attack attacker defender model =
+  if | attacker.value > defender.value -> attackerWins attacker defender model
+     | defender.value > attacker.value -> updatePieces {attacker | inPlay <- False} model
+     | otherwise -> updatePieces {attacker | inPlay <- False} model
+                    |> updatePieces {defender | inPlay <- False}
+
+attackerWins : Piece -> Piece -> Model -> Model
+attackerWins attacker defender model =
+  updatePieces {attacker | coord <- defender.coord} model
+  |> updatePieces {defender | inPlay <- False}
+
+-- first filter the list for pieces that are inPlay
+-- then look for the one at given x,y location
+-- then take the head, since there should only be one
+getPieceByLocation : List Piece -> (Int, Int) -> Maybe Piece
+getPieceByLocation pieces (x,y) =
+  List.filter (\n -> n.inPlay) pieces
+  |> List.filter (\n -> if n.coord == (x,y) then True else False)
+  |> List.head
+
+-- mark the given coordinate as the selected piece
+markSelected : (Int, Int) -> Model -> Model
+markSelected (x,y) model =
    { model | pieceIsSelected <- True
-           , selectedPieceIndex <- index }
+           , selectedPieceCoord <- (x,y) }
 
     
 -- Figure out which square was clicked, basically translate mouse coords to grid coords
@@ -134,32 +166,26 @@ drawRows : List Int -> List Form
 drawRows rowNums =
   List.map (\n -> traced (dashed blue) (getRow n)) rowNums
 
-placePiece: Int -> a -> Form
-placePiece index pieceValue =
-  move (getMoveX(index), getMoveY(index) ) (toForm (show pieceValue))
+placePiece: Piece -> Form
+placePiece piece =
+  show piece.value
+  |> color piece.color
+  |> toForm
+  |> move (calcMove piece.coord)
   
+calcMove: (Int, Int) -> (Float, Float)
+calcMove (x,y) = ( (getMoveX x), (getMoveY y) )
+
 -- helper function to simplify the code gettig the x coordinate for a piece
 getMoveX: Int -> Float
-getMoveX index = calcColumnNum(index)
-                 |> calcX
-                 |> toFloat
+getMoveX x = calcX x
+             |> toFloat
 
 -- helper function to simplify the code gettig the y coordinate for a piece
 getMoveY: Int -> Float
-getMoveY index = calcRowNum(index)
-                 |> calcY
-                 |> toFloat
+getMoveY y = calcY y
+             |> toFloat
 
--- calculate which column number the given index corrosponds to
-calcColumnNum: Int -> Int
-calcColumnNum index = if index < columns then index
-                      else (index % columns)
-
--- calculate which row the given index corrosponds to
-calcRowNum: Int -> Int
-calcRowNum index = if index < columns then 0
-                   else (index // columns)
-                   
 -- calculate the x coordinate for piece based on its column number and board goemetry
 calcX: Int -> Int
 calcX columnNo  = columnMin + (columnNo * columnWidth + columnSpacing)
@@ -168,7 +194,9 @@ calcX columnNo  = columnMin + (columnNo * columnWidth + columnSpacing)
 calcY rowNo = rowMin - (rowNo * rowHeight + rowSpacing)
 
   
-placePieces: List Int -> List Form
+-- First filter the list for pieces that are inPlay then show them
+placePieces: List Piece -> List Form
 placePieces l =
-  Array.toList (Array.indexedMap placePiece (Array.fromList l))
-  -- List.map (\n -> move (-50,50) (toForm (show n)) ) l
+  List.map placePiece (List.filter (\n -> n.inPlay) l)
+  
+-- List.map (\n -> move (-50,50) (toForm (show n)) ) l
