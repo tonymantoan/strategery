@@ -75,6 +75,12 @@ update mousePosition  model =
           Nothing -> model
           
           Just n ->
+            if ( isMoveValid n.coord selected ) == True then
+              handleMove n defender selected model
+            else
+              resetPieceSelected model
+            
+{--
             case defender of
               Nothing ->
               updatePieces {n | coord <- selected} model
@@ -83,6 +89,18 @@ update mousePosition  model =
               Just m ->
                 attack n m model 
                 |> resetPieceSelected
+--}
+                
+handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
+handleMove attacker defender moveTo model =
+  case defender of
+    Nothing ->
+    updatePieces {attacker | coord <- moveTo} model
+    |> resetPieceSelected
+              
+    Just m ->
+      attack attacker m model 
+      |> resetPieceSelected
 
 view : Model -> Element    
 view model =
@@ -101,6 +119,14 @@ updatePieces piece model =
 resetPieceSelected : Model -> Model
 resetPieceSelected model =
   { model | pieceIsSelected <- False }
+  
+isMoveValid : (Int, Int) -> (Int, Int) ->  Bool
+isMoveValid (pieceX, pieceY) (toX, toY) =
+  if | ( pieceY == (toY - 1) ) && (pieceX == toX) -> True
+     | ( pieceY == (toY + 1) ) && (pieceX == toX) -> True
+     | ( pieceX == (toX - 1) ) && (pieceY == toY) -> True
+     | ( pieceX == (toX + 1) ) && (pieceY == toY) -> True
+     | otherwise -> False
 
 -- TODO: Proper game logic:
 attack : Piece -> Piece -> Model -> Model
