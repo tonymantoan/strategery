@@ -76,7 +76,9 @@ update mousePosition  model =
           
           Just n ->
             case defender of
-              Nothing -> model
+              Nothing ->
+              updatePieces {n | coord <- selected} model
+              |> resetPieceSelected
               
               Just m ->
                 attack n m model 
