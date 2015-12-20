@@ -17,6 +17,7 @@ type alias Model =
   { pieceIsSelected : Bool
     , selectedPieceCoord : (Int, Int)
     , pieces : List Piece
+    , message: String
   }
   
 -- TODO: automatically increment the pieceId
@@ -38,6 +39,7 @@ initBoard =
   { pieceIsSelected = False
     , selectedPieceCoord = (0,0)
     , pieces = blues ++ reds
+    , message = "Start Game!"
   }
           
 columns = 4
@@ -65,6 +67,7 @@ update mousePosition  model =
   if model.pieceIsSelected == False then
     -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
     markSelected  (spaceClicked mousePosition) model
+    |> updatePieceSelectedMessage
   else
     -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
     let selected = (spaceClicked mousePosition)
@@ -78,7 +81,7 @@ update mousePosition  model =
             if ( isMoveValid n.coord selected ) == True then
               handleMove n defender selected model
             else
-              resetPieceSelected model
+              resetPieceSelected {model | message <- "Invalid move"}
             
 {--
             case defender of
@@ -102,14 +105,21 @@ handleMove attacker defender moveTo model =
       attack attacker m model 
       |> resetPieceSelected
 
+{--
+  # View
+  The collage contains the game board itself.  Other elements show
+  other game related info.
+--}
 view : Model -> Element    
-view model =
+view model = flow down [
   collage boardWidth boardHeight
-    ( 
-      (drawCols [0..columns]) ++ 
-      (drawRows [0..rows]) ++
-      (placePieces model.pieces)
-    )
+      ( 
+        (drawCols [0..columns]) ++ 
+        (drawRows [0..rows]) ++
+        (placePieces model.pieces)
+      ),
+      gameMessage model.message
+    ]
 
 updatePieces :  Piece -> Model -> Model
 updatePieces piece model =
@@ -119,6 +129,9 @@ updatePieces piece model =
 resetPieceSelected : Model -> Model
 resetPieceSelected model =
   { model | pieceIsSelected <- False }
+  
+updatePieceSelectedMessage : Model -> Model
+updatePieceSelectedMessage model = {model | message <- "Selected " ++ ( toString model.selectedPieceCoord ) }
   
 isMoveValid : (Int, Int) -> (Int, Int) ->  Bool
 isMoveValid (pieceX, pieceY) (toX, toY) =
@@ -226,5 +239,10 @@ calcY rowNo = rowMin - (rowNo * rowHeight + rowSpacing)
 placePieces: List Piece -> List Form
 placePieces l =
   List.map placePiece (List.filter (\n -> n.inPlay) l)
+  
+gameMessage: String -> Element
+gameMessage message =
+  Text.fromString message
+  |> centered
   
 -- List.map (\n -> move (-50,50) (toForm (show n)) ) l
