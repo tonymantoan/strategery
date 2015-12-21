@@ -5,13 +5,7 @@ import Array exposing (..)
 import Mouse
 import Text
 
-type alias Piece =
-  { id : Int
-    , coord : (Int, Int)
-    , value : Int
-    , color : Color
-    , inPlay : Bool
-  }
+import GamePieces exposing (..)
 
 type alias Model =
   { pieceIsSelected : Bool
@@ -19,20 +13,6 @@ type alias Model =
     , pieces : List Piece
     , message: String
   }
-  
--- TODO: automatically increment the pieceId
-makePiece : Int -> (Int, Int) -> Int -> Color -> Piece
-makePiece pid location val col =
-  { id = pid
-    ,coord = location
-    , value = val
-    , color = col
-    , inPlay = True
-  }
-  
-blues = [ (makePiece 1 (0,0) 4 blue), (makePiece 2 (1,0) 5 blue), (makePiece 3 (2,0) 6 blue), (makePiece 4 (3,0) 3 blue) ]
-
-reds = [ (makePiece 5 (0,4) 4 red), (makePiece 6 (1,4) 5 red), (makePiece 7 (2,4) 6 red), (makePiece 8 (3,4) 3 red) ]
 
 initBoard : Model
 initBoard = 
@@ -42,10 +22,10 @@ initBoard =
     , message = "Start Game!"
   }
           
-columns = 4
-rows = 5
-boardWidth = 200
-boardHeight = 250
+columns = 10
+rows = 10
+boardWidth = 500
+boardHeight = 500
 columnMin = (boardWidth//2) * -1
 columnMax = boardWidth // 2
 columnWidth = boardWidth // columns
@@ -82,17 +62,6 @@ update mousePosition  model =
               handleMove n defender selected model
             else
               resetPieceSelected {model | message <- "Invalid move"}
-            
-{--
-            case defender of
-              Nothing ->
-              updatePieces {n | coord <- selected} model
-              |> resetPieceSelected
-              
-              Just m ->
-                attack n m model 
-                |> resetPieceSelected
---}
                 
 handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
 handleMove attacker defender moveTo model =
