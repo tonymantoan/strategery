@@ -49,17 +49,6 @@ update mousePosition  model =
               handleMove n defender selected model
             else
               resetPieceSelected {model | message <- "Invalid move"}
-                
-handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
-handleMove attacker defender moveTo model =
-  case defender of
-    Nothing ->
-    updatePieces {attacker | coord <- moveTo} model
-    |> resetPieceSelected
-              
-    Just m ->
-      attack attacker m model 
-      |> resetPieceSelected
 
 {--
   # View
@@ -76,6 +65,17 @@ view model = flow down [
       ),
       gameMessage model.message
     ]
+    
+handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
+handleMove attacker defender moveTo model =
+  case defender of
+    Nothing ->
+    updatePieces {attacker | coord <- moveTo} model
+    |> resetPieceSelected
+              
+    Just m ->
+      attack attacker m model 
+      |> resetPieceSelected
 
 updatePieces :  Piece -> Model -> Model
 updatePieces piece model =
