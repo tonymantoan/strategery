@@ -93,9 +93,13 @@ updatePieceSelectedMessage model = {model | message <- "Selected " ++ ( toString
 isMoveValid : Int -> (Int, Int) -> (Int, Int) -> Model -> Bool
 isMoveValid value from to model =
   if value == scout then
-    ( isLinearTo from to ) && ( hasClearPath from to model )
+    ( to |> isNotInNoGoZone ) && ( isLinearTo from to ) && ( hasClearPath from to model )
   else
-    isWithinOne from to
+    ( to |> isNotInNoGoZone ) && ( isWithinOne from to )
+    
+isNotInNoGoZone : (Int, Int) -> Bool
+isNotInNoGoZone coord =
+  List.isEmpty ( List.filter (\n -> if n == coord then True else False) noGo )
     
 hasClearPath : (Int, Int) -> (Int, Int) -> Model -> Bool
 hasClearPath (fromX, fromY) (toX, toY) model =
@@ -103,9 +107,9 @@ hasClearPath (fromX, fromY) (toX, toY) model =
     True
   else
     if fromX == toX then
-      isBlocked ( checkYaxisBlock fromX fromY toY (getInPlayCoords model.pieces) )
+      isBlocked ( checkYaxisBlock fromX fromY toY ((getInPlayCoords model.pieces) ++ noGo) )
     else
-      isBlocked ( checkXaxisBlock fromY fromX toX (getInPlayCoords model.pieces) )
+      isBlocked ( checkXaxisBlock fromY fromX toX ((getInPlayCoords model.pieces) ++ noGo) )
 
 getInPlayCoords : List Piece -> List (Int, Int)
 getInPlayCoords pieces =
