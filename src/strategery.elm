@@ -33,6 +33,7 @@ update : (Int,Int) -> Model -> Model
 update mousePosition  model =
   if model.pieceIsSelected == False then
     -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
+    -- but first make sure the piece is movable
     let
       pieceClicked = getPieceByLocation model.pieces (spaceClicked mousePosition)
     in
@@ -40,8 +41,11 @@ update mousePosition  model =
         Nothing -> model
         
         Just n ->
-          markSelected  n.coord model
-          |> updatePieceSelectedMessage
+          if n.value == bomb || n.value == flag then
+           model
+          else
+            markSelected  n.coord model
+            |> updatePieceSelectedMessage
   else
     -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
     let selected = (spaceClicked mousePosition)
