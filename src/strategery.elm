@@ -61,7 +61,8 @@ view model = flow down [
       ( 
         (drawCols [0..columns]) ++ 
         (drawRows [0..rows]) ++
-        (placePieces model.pieces)
+        (placePieces model.pieces) ++
+        (makeNoGoSpaces noGo)
       ),
       gameMessage model.message
     ]

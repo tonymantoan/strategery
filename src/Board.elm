@@ -19,6 +19,8 @@ rowMax = (boardHeight//2) * -1
 rowHeight = boardHeight // rows
 rowSpacing = rowHeight // 2
 
+noGo = [ (2,4), (2,5), (3,4), (3,5), (6,4), (6,5), (7,4), (7,5) ]
+
 -- Figure out which square was clicked, basically translate mouse coords to grid coords
 spaceClicked : (Int, Int) -> (Int, Int)
 spaceClicked  (x,y) =
@@ -88,3 +90,10 @@ calcY rowNo = rowMin - (rowNo * rowHeight + rowSpacing)
 placePieces: List Piece -> List Form
 placePieces l =
   List.map placePiece (List.filter (\n -> n.inPlay) l)
+  
+makeNoGoSpaces: List (Int, Int) -> List Form
+makeNoGoSpaces noGoList =
+  List.map (\n -> rect ( toFloat (columnWidth - 1)) (toFloat (rowHeight - 1) )
+                  |> filled Color.black
+                  |> move (calcMove n)
+           ) noGoList
