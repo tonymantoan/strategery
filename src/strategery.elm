@@ -45,7 +45,7 @@ update mousePosition  model =
           Nothing -> model
           
           Just n ->
-            if ( isMoveValid n.coord selected ) == True then
+            if ( isMoveValid n.value n.coord selected model ) == True then
               handleMove n defender selected model
             else
               resetPieceSelected {model | message <- "Invalid move"}
@@ -89,12 +89,72 @@ resetPieceSelected model =
 updatePieceSelectedMessage : Model -> Model
 updatePieceSelectedMessage model = {model | message <- "Selected " ++ ( toString model.selectedPieceCoord ) }
   
-isMoveValid : (Int, Int) -> (Int, Int) ->  Bool
-isMoveValid (pieceX, pieceY) (toX, toY) =
+isMoveValid : Int -> (Int, Int) -> (Int, Int) -> Model -> Bool
+isMoveValid value from to model =
+  if value == scout then
+    ( isLinearTo from to ) && ( hasClearPath from to model )
+  else
+    isWithinOne from to
+    
+hasClearPath : (Int, Int) -> (Int, Int) -> Model -> Bool
+hasClearPath (fromX, fromY) (toX, toY) model =
+  if isWithinOne (fromX, fromY) (toX, toY) then
+    True
+  else
+    if fromX == toX then
+      isBlocked ( checkYaxisBlock fromX fromY toY model.pieces )
+    else
+      isBlocked ( checkXaxisBlock fromY fromX toX model.pieces )
+
+-- Check the given list for any elements that are True.  If none are found
+-- the list will be empty, which means the path is clear.
+isBlocked : List Bool -> Bool
+isBlocked blockChecks =
+  List.isEmpty ( List.filter (\n -> n) blockChecks )
+
+{--
+  When a scout moves vertically, this will check if any pieces are in its way.
+  
+  - Filter the pieces list for only pieces that are in play.
+  - Map that list to function that checks if the x coord is the same as the scout
+  - if so, also check if the y coord is between the scout and its desitination y coord.
+--}
+checkYaxisBlock : Int -> Int -> Int -> List Piece -> List Bool
+checkYaxisBlock x fromY toY pieces =
+  -- map : (a -> b) -> List a -> List b
+  List.map (\n -> if (getX n.coord) == x && (isBetween fromY toY (getY n.coord) ) then True else False ) (List.filter (\n -> n.inPlay) pieces)
+
+checkXaxisBlock : Int -> Int -> Int -> List Piece -> List Bool
+checkXaxisBlock y fromX toX pieces =
+  List.map (\n -> if (getY n.coord) == y && (isBetween fromX toX (getX n.coord) ) then True else False ) (List.filter (\n -> n.inPlay) pieces)
+
+
+getX (x,y) = x
+getY (x,y) = y
+ 
+isBetween : Int -> Int -> Int -> Bool
+isBetween start end val =
+  let
+    lowerBound = min start end
+    upperBound = max start end
+  in
+    if (val < upperBound) && (val > lowerBound) then
+      True
+    else
+      False
+     
+isWithinOne : (Int, Int) -> (Int, Int) ->  Bool
+isWithinOne (pieceX, pieceY) (toX, toY) =
   if | ( pieceY == (toY - 1) ) && (pieceX == toX) -> True
      | ( pieceY == (toY + 1) ) && (pieceX == toX) -> True
      | ( pieceX == (toX - 1) ) && (pieceY == toY) -> True
      | ( pieceX == (toX + 1) ) && (pieceY == toY) -> True
+     | otherwise -> False
+
+isLinearTo : (Int, Int) -> (Int, Int) -> Bool
+isLinearTo (fromX, fromY) (toX, toY) =
+  if | fromX == toX -> True
+     | fromY == toY -> True
      | otherwise -> False
 
 -- TODO: Proper game logic:

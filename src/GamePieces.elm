@@ -25,6 +25,7 @@ makePiece pid location val col =
 -- Definitions for values of pieces that don't have a numeric value in Statego
 spy = -1
 bomb = 0
+scout = 2
 flag = 11
 
 -- Create a lists of all blue and red pieces.
