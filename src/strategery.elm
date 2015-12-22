@@ -102,9 +102,13 @@ hasClearPath (fromX, fromY) (toX, toY) model =
     True
   else
     if fromX == toX then
-      isBlocked ( checkYaxisBlock fromX fromY toY model.pieces )
+      isBlocked ( checkYaxisBlock fromX fromY toY (getInPlayCoords model.pieces) )
     else
-      isBlocked ( checkXaxisBlock fromY fromX toX model.pieces )
+      isBlocked ( checkXaxisBlock fromY fromX toX (getInPlayCoords model.pieces) )
+
+getInPlayCoords : List Piece -> List (Int, Int)
+getInPlayCoords pieces =
+  List.map (\n -> n.coord ) (List.filter (\n -> n.inPlay) pieces)
 
 -- Check the given list for any elements that are True.  If none are found
 -- the list will be empty, which means the path is clear.
@@ -119,14 +123,14 @@ isBlocked blockChecks =
   - Map that list to function that checks if the x coord is the same as the scout
   - if so, also check if the y coord is between the scout and its desitination y coord.
 --}
-checkYaxisBlock : Int -> Int -> Int -> List Piece -> List Bool
-checkYaxisBlock x fromY toY pieces =
+checkYaxisBlock : Int -> Int -> Int -> List (Int, Int) -> List Bool
+checkYaxisBlock x fromY toY coords =
   -- map : (a -> b) -> List a -> List b
-  List.map (\n -> if (getX n.coord) == x && (isBetween fromY toY (getY n.coord) ) then True else False ) (List.filter (\n -> n.inPlay) pieces)
+  List.map (\n -> if (getX n) == x && (isBetween fromY toY (getY n) ) then True else False ) coords
 
-checkXaxisBlock : Int -> Int -> Int -> List Piece -> List Bool
-checkXaxisBlock y fromX toX pieces =
-  List.map (\n -> if (getY n.coord) == y && (isBetween fromX toX (getX n.coord) ) then True else False ) (List.filter (\n -> n.inPlay) pieces)
+checkXaxisBlock : Int -> Int -> Int -> List (Int, Int) -> List Bool
+checkXaxisBlock y fromX toX coords =
+  List.map (\n -> if (getY n) == y && (isBetween fromX toX (getX n) ) then True else False ) coords
 
 
 getX (x,y) = x
