@@ -23,10 +23,10 @@ makePiece pid location val col =
   }
   
 -- Definitions for values of pieces that don't have a numeric value in Statego
-spy = -1
-bomb = 0
+spy = 0
+bomb = 11
 scout = 2
-flag = 11
+flag = -1
 
 -- Create a lists of all blue and red pieces.
 blues = [ (makePiece 1 (0,0) 10 blue), (makePiece 2 (1,0) 9 blue), (makePiece 3 (2,0) 8 blue), (makePiece 4 (3,0) 8 blue),
@@ -37,9 +37,9 @@ blues = [ (makePiece 1 (0,0) 10 blue), (makePiece 2 (1,0) 9 blue), (makePiece 3 
           (makePiece 20 (9,1) 3 blue), (makePiece 21 (0,2) 3 blue), (makePiece 22 (1,2) 3 blue), (makePiece 23 (2,2) 3 blue),
           (makePiece 24 (3,2) 3 blue), (makePiece 25 (4,2) 2 blue), (makePiece 26 (5,2) 2 blue), (makePiece 27 (6,2) 2 blue),
           (makePiece 28 (7,2) 2 blue), (makePiece 29 (8,2) 2 blue), (makePiece 30 (9,2) 2 blue), (makePiece 31 (0,3) 2 blue),
-          (makePiece 32 (1,3) 2 blue), (makePiece 33 (2,3) -1 blue), (makePiece 34 (3,3) 0 blue), (makePiece 35 (4,3) 0 blue),
-          (makePiece 36 (5,3) 0 blue), (makePiece 37 (6,3) 0 blue), (makePiece 38 (7,3) 0 blue), (makePiece 39 (8,3) 0 blue),
-          (makePiece 40 (9,3) 11 blue)
+          (makePiece 32 (1,3) 2 blue), (makePiece 33 (2,3) 0 blue), (makePiece 34 (3,3) 11 blue), (makePiece 35 (4,3) 11 blue),
+          (makePiece 36 (5,3) 11 blue), (makePiece 37 (6,3) 11 blue), (makePiece 38 (7,3) 11 blue), (makePiece 39 (8,3) 11 blue),
+          (makePiece 40 (9,3) -1 blue)
         ]
 
 reds = [ (makePiece 41 (0,6) 10 red), (makePiece 42 (1,6) 9 red), (makePiece 43 (2,6) 8 red), (makePiece 44 (3,6) 8 red),
@@ -50,7 +50,7 @@ reds = [ (makePiece 41 (0,6) 10 red), (makePiece 42 (1,6) 9 red), (makePiece 43 
           (makePiece 60 (9,7) 3 red), (makePiece 61 (0,8) 3 red), (makePiece 62 (1,8) 3 red), (makePiece 63 (2,8) 3 red),
           (makePiece 64 (3,8) 3 red), (makePiece 65 (4,8) 2 red), (makePiece 66 (5,8) 2 red), (makePiece 67 (6,8) 2 red),
           (makePiece 68 (7,8) 2 red), (makePiece 69 (8,8) 2 red), (makePiece 70 (9,8) 2 red), (makePiece 71 (0,9) 2 red),
-          (makePiece 72 (1,9) 2 red), (makePiece 73 (2,9) -1 red), (makePiece 74 (3,9) 0 red), (makePiece 75 (4,9) 0 red),
-          (makePiece 76 (5,9) 0 red), (makePiece 77 (6,9) 0 red), (makePiece 78 (7,9) 0 red), (makePiece 79 (8,9) 0 red),
-          (makePiece 80 (9,9) 11 red)
+          (makePiece 72 (1,9) 2 red), (makePiece 73 (2,9) 0 red), (makePiece 74 (3,9) 11 red), (makePiece 75 (4,9) 11 red),
+          (makePiece 76 (5,9) 11 red), (makePiece 77 (6,9) 11 red), (makePiece 78 (7,9) 11 red), (makePiece 79 (8,9) 11 red),
+          (makePiece 80 (9,9) -1 red)
         ]
