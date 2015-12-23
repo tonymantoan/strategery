@@ -177,10 +177,21 @@ isLinearTo (fromX, fromY) (toX, toY) =
      | fromY == toY -> True
      | otherwise -> False
 
--- TODO: Proper game logic:
+{--
+  Battle rules.
+  
+  - if a miner is attacking bomb, the miner wins
+  - if a spy is attacking the marshal (usually the 10) the spy wins
+  - if it's not one of those special cases, high number wins
+    - if the attacker wins, it takes the place of the defender
+    - if the defender wins, the attacker is simply removed from play
+  - if it's a tie, they are both removed
+--}
 attack : Piece -> Piece -> Model -> Model
 attack attacker defender model =
-  if | attacker.value > defender.value -> attackerWins attacker defender model
+  if | attacker.value == miner && defender.value == bomb -> attackerWins attacker defender model
+     | attacker.value == spy && defender.value == marshal -> attackerWins attacker defender model
+     | attacker.value > defender.value -> attackerWins attacker defender model
      | defender.value > attacker.value -> updatePieces {attacker | inPlay <- False} model
      | otherwise -> updatePieces {attacker | inPlay <- False} model
                     |> updatePieces {defender | inPlay <- False}
