@@ -69,7 +69,7 @@ placePiece piece =
   |> move (calcMove piece.coord)
   
 displayPiece: Int -> Element
-displayPiece value
+displayPiece value =
   if value == flag then
     centered (Text.fromString "F")
   else if value == spy then
