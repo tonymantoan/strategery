@@ -1,9 +1,10 @@
 module Board where
 
 import Color
-import Graphics.Element exposing (color, show)
+import Text
+import Graphics.Element exposing (Element, size, centered, color, show)
 import Graphics.Collage exposing (..)
-import GamePieces exposing (Piece)
+import GamePieces exposing (Piece, flag, spy, bomb)
 
 columns = 10
 rows = 10
@@ -61,10 +62,22 @@ drawRows rowNums =
   
 placePiece: Piece -> Form
 placePiece piece =
-  show piece.value
+  displayPiece piece.value
+  |> size (columnWidth // 2) (rowHeight // 2)
   |> color piece.color
   |> toForm
   |> move (calcMove piece.coord)
+  
+displayPiece: Int -> Element
+displayPiece value
+  if value == flag then
+    centered (Text.fromString "F")
+  else if value == spy then
+    centered (Text.fromString "S")
+  else if value == bomb then
+    centered (Text.fromString "B")
+  else
+    centered (Text.fromString (toString value))
   
 calcMove: (Int, Int) -> (Float, Float)
 calcMove (x,y) = ( (getMoveX x), (getMoveY y) )
