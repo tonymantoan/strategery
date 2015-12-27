@@ -23,6 +23,9 @@ initBoard =
     , message = "Start Game!"
   }
 
+board : Board
+board = makeBoard 10 10 500 500 0 0
+
 -- foldp func(anyType, stateObj, stateObj) state signal
 -- create a signal of Models with foldp, which is maped to the view function
 main =
@@ -35,7 +38,7 @@ update mousePosition  model =
     -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
     -- but first make sure the piece is movable
     let
-      pieceClicked = getPieceByLocation model.pieces (spaceClicked mousePosition)
+      pieceClicked = getPieceByLocation model.pieces (spaceClicked mousePosition board)
     in
       case pieceClicked of
         Nothing -> model
@@ -48,7 +51,7 @@ update mousePosition  model =
             |> updatePieceSelectedMessage
   else
     -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
-    let selected = (spaceClicked mousePosition)
+    let selected = (spaceClicked mousePosition board)
         attacker = getPieceByLocation model.pieces model.selectedPieceCoord 
         defender = getPieceByLocation model.pieces selected
     in
@@ -67,13 +70,16 @@ update mousePosition  model =
   other game related info.
 --}
 view : Model -> Element    
-view model = flow down [
-  Graphics.Collage.collage boardWidth boardHeight
+view model = gameBoard model
+    
+gameBoard : Model -> Element
+gameBoard model = flow down [
+  Graphics.Collage.collage board.width board.height
       ( 
-        (drawCols [0..columns]) ++ 
-        (drawRows [0..rows]) ++
-        (placePieces model.pieces) ++
-        (makeNoGoSpaces noGo)
+        (drawCols board) ++ 
+        (drawRows board) ++
+        (placePieces model.pieces placePiece board) ++
+        (makeNoGoSpaces noGo board)
       ),
       gameMessage model.message
     ]
