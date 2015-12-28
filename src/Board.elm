@@ -119,7 +119,7 @@ getMoveY y board = ( board.rowMin - (y * board.rowHeight + board.rowSpacing) )
 -- First filter the list for pieces that are inPlay then show them
 placePieces: List Piece -> (Piece -> Board -> Form) -> Board -> List Form
 placePieces l makeForm board =
-  List.map (\n -> makeForm n board ) (List.filter (\n -> n.inPlay) l)
+  List.map (\n -> makeForm n board ) l
   
 makeNoGoSpaces: List (Int, Int) -> Board -> List Form
 makeNoGoSpaces noGoList board =

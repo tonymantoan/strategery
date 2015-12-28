@@ -13,23 +13,41 @@ type alias Model =
     , selectedPieceCoord : (Int, Int)
     , pieces : List Piece
     , message: String
+    , stage: Int
+    , turn: Color
   }
+  
+setup = 1
+started = 2
+over = 3
 
-initBoard : Model
-initBoard = 
+initGame : Model
+initGame = 
   { pieceIsSelected = False
     , selectedPieceCoord = (0,0)
     , pieces = blues ++ reds
     , message = "Start Game!"
+    , stage = setup
+    , turn = blue
   }
 
 board : Board
 board = makeBoard 10 10 500 500 0 0
 
+tray : Board
+tray = makeBoard 10 10 400 400 500 0
+
 -- foldp func(anyType, stateObj, stateObj) state signal
 -- create a signal of Models with foldp, which is maped to the view function
 main =
-  Signal.map view (Signal.foldp update initBoard (Signal.sampleOn Mouse.clicks Mouse.position) )
+  Signal.map view (Signal.foldp update initGame (Signal.sampleOn Mouse.clicks Mouse.position) )
+  
+selectPiece : Model -> (Int, Int) -> Maybe Piece
+selectPiece model (mouseX, mouseY) =
+  if (model.stage == setup) && mouseX > board.width then
+    getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) tray)
+  else
+    getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) board)
 
 -- TODO: Is that nested case the only way to do this?  
 update : (Int,Int) -> Model -> Model
@@ -44,7 +62,7 @@ update mousePosition  model =
         Nothing -> model
         
         Just n ->
-          if n.value == bomb || n.value == flag then
+          if (model.stage == started) && (n.value == bomb || n.value == flag) then
            model
           else
             markSelected  n.coord model
@@ -59,7 +77,7 @@ update mousePosition  model =
           Nothing -> model
           
           Just n ->
-            if ( isMoveValid n.value n.coord selected model ) == True then
+            if ( isMoveValid n selected model ) == True then
               handleMove n defender selected model
             else
               resetPieceSelected {model | message <- "Invalid move"}
@@ -70,7 +88,16 @@ update mousePosition  model =
   other game related info.
 --}
 view : Model -> Element    
-view model = gameBoard model
+view model = flow right [ (gameBoard model), (pieceTray model) ]
+
+pieceTray : Model -> Element
+pieceTray model =
+  Graphics.Collage.collage tray.width tray.height
+    (
+      (drawCols tray) ++ 
+      (drawRows tray) ++
+      (placePieces (List.filter (\n -> False == n.inPlay) model.pieces) placePiece tray)
+    )
     
 gameBoard : Model -> Element
 gameBoard model = flow down [
@@ -78,14 +105,33 @@ gameBoard model = flow down [
       ( 
         (drawCols board) ++ 
         (drawRows board) ++
-        (placePieces model.pieces placePiece board) ++
+        (placePieces (List.filter (\n -> n.inPlay) model.pieces) placePiece board) ++
         (makeNoGoSpaces noGo board)
       ),
       gameMessage model.message
     ]
-    
+
 handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
 handleMove attacker defender moveTo model =
+  if model.stage == setup then
+    handleMoveForSetup attacker defender moveTo model
+  else
+    handleMoveForPlay attacker defender moveTo model
+    
+handleMoveForSetup : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
+handleMoveForSetup attacker defender moveTo model =
+  case defender of
+    Nothing ->
+    updatePieces {attacker | coord <- moveTo} model
+    |> resetPieceSelected
+              
+    Just m ->
+      updatePieces {m | coord <- attacker.coord} model
+      |> updatePieces {attacker | coord <- moveTo}
+      |> resetPieceSelected
+
+handleMoveForPlay : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
+handleMoveForPlay attacker defender moveTo model =
   case defender of
     Nothing ->
     updatePieces {attacker | coord <- moveTo} model
@@ -106,13 +152,29 @@ resetPieceSelected model =
   
 updatePieceSelectedMessage : Model -> Model
 updatePieceSelectedMessage model = {model | message <- "Selected " ++ ( toString model.selectedPieceCoord ) }
-  
-isMoveValid : Int -> (Int, Int) -> (Int, Int) -> Model -> Bool
-isMoveValid value from to model =
-  if value == scout then
-    ( to |> isNotInNoGoZone ) && ( isLinearTo from to ) && ( hasClearPath from to model )
+
+isMoveValid : Piece -> (Int, Int) -> Model -> Bool
+isMoveValid piece to model =
+  if model.stage == setup then
+    isMoveValidForSetup piece to model
   else
-    ( to |> isNotInNoGoZone ) && ( isWithinOne from to )
+    isMoveValidForPlay piece to model
+
+isMoveValidForSetup : Piece -> (Int, Int) -> Model -> Bool
+isMoveValidForSetup piece (toX, toY) model =
+  if piece.color == blue && toY < 4 then
+    True
+  else if piece.color == red && toY > 5 then
+    True
+  else
+    False
+
+isMoveValidForPlay : Piece -> (Int, Int) -> Model -> Bool
+isMoveValidForPlay piece to model =
+  if piece.value == scout then
+    ( to |> isNotInNoGoZone ) && ( isLinearTo piece.coord to ) && ( hasClearPath piece.coord to model )
+  else
+    ( to |> isNotInNoGoZone ) && ( isWithinOne piece.coord to )
     
 isNotInNoGoZone : (Int, Int) -> Bool
 isNotInNoGoZone coord =
