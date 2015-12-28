@@ -69,7 +69,7 @@ update action model =
         handleClickWithSelected mousePosition model
         
     StageButton val ->
-      model
+      handleStageButtonPress val model
     
 selectPiece : Model -> (Int, Int) -> Maybe Piece
 selectPiece model (mouseX, mouseY) =
@@ -110,6 +110,21 @@ handleClickWithSelected mousePosition model =
             handleMove n defender selected model
           else
             resetPieceSelected {model | message <- "Invalid move"}
+            
+handleStageButtonPress : Int -> Model -> Model
+handleStageButtonPress val model =
+  if model.stage == setup then
+    if model.turn == blue then
+      {model | turn <- red, message <- "Place Red Pieces"}
+    else
+      {model | stage <- started, message <- "Red's Turn"}
+    
+  else
+    if model.turn == blue then
+      {model | turn <- red, message <- "Red's turn"}
+    else 
+      {model | turn <- blue, message <- "Blue's turn"}
+    
 {--
   # VIEW
   The collage contains the game board itself.  Other elements show
@@ -124,7 +139,7 @@ pieceTray model =
     (
       (drawCols tray) ++ 
       (drawRows tray) ++
-      (placePieces (List.filter (\n -> False == n.inPlay) model.pieces) placePiece tray)
+      (placePieces (List.filter (\n -> False == n.inPlay) model.pieces) placePiece model.turn tray)
     )
     
 gameBoard : Model -> Element
@@ -133,7 +148,7 @@ gameBoard model = flow down [
       ( 
         (drawCols board) ++ 
         (drawRows board) ++
-        (placePieces (List.filter (\n -> n.inPlay) model.pieces) placePiece board) ++
+        (placePieces (List.filter (\n -> n.inPlay) model.pieces) placePiece model.turn board) ++
         (makeNoGoSpaces noGo board)
       )
       , gameMessage model.message

@@ -83,9 +83,12 @@ drawRows : Board -> List Form
 drawRows board =
   List.map (\n -> traced (dashed Color.blue) (getRow n board)) [0..board.rows]
   
-placePiece: Piece -> Board -> Form
-placePiece piece board =
-  displayPiece piece.value
+placePiece: Piece -> Color.Color -> Board -> Form
+placePiece piece turn board =
+  (if turn == piece.color then
+    displayPiece piece.value
+  else 
+    centered (Text.fromString "") ) 
   |> size (board.columnWidth // 2) (board.rowHeight // 2)
   |> color piece.color
   |> toForm
@@ -117,9 +120,9 @@ getMoveY y board = ( board.rowMin - (y * board.rowHeight + board.rowSpacing) )
              |> toFloat
   
 -- First filter the list for pieces that are inPlay then show them
-placePieces: List Piece -> (Piece -> Board -> Form) -> Board -> List Form
-placePieces l makeForm board =
-  List.map (\n -> makeForm n board ) l
+placePieces: List Piece -> (Piece -> Color.Color -> Board -> Form) -> Color.Color -> Board -> List Form
+placePieces l makeForm turn board =
+  List.map (\n -> makeForm n turn board ) l
   
 makeNoGoSpaces: List (Int, Int) -> Board -> List Form
 makeNoGoSpaces noGoList board =
