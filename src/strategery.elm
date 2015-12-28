@@ -42,48 +42,56 @@ tray = makeBoard 10 10 400 400 500 0
 main =
   Signal.map view (Signal.foldp update initGame (Signal.sampleOn Mouse.clicks Mouse.position) )
   
+-- UPDATE
+
+update : (Int,Int) -> Model -> Model
+update mousePosition  model =
+  if model.pieceIsSelected == False then
+    handleClickWithoutSelected mousePosition model
+  else
+    handleClickWithSelected mousePosition model
+    
 selectPiece : Model -> (Int, Int) -> Maybe Piece
 selectPiece model (mouseX, mouseY) =
   if (model.stage == setup) && mouseX > board.width then
     getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) tray)
   else
     getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) board)
-
--- TODO: Is that nested case the only way to do this?  
-update : (Int,Int) -> Model -> Model
-update mousePosition  model =
-  if model.pieceIsSelected == False then
-    -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
-    -- but first make sure the piece is movable
-    let
-      pieceClicked = getPieceByLocation model.pieces (spaceClicked mousePosition board)
-    in
-      case pieceClicked of
-        Nothing -> model
+    
+handleClickWithoutSelected : (Int, Int) -> Model -> Model
+handleClickWithoutSelected mousePosition model =
+  -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
+  -- but first make sure the piece is movable
+  let
+    pieceClicked = selectPiece model mousePosition
+  in
+    case pieceClicked of
+      Nothing -> model
         
-        Just n ->
-          if (model.stage == started) && (n.value == bomb || n.value == flag) then
-           model
-          else
-            markSelected  n.coord model
-            |> updatePieceSelectedMessage
-  else
-    -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
-    let selected = (spaceClicked mousePosition board)
-        attacker = getPieceByLocation model.pieces model.selectedPieceCoord 
-        defender = getPieceByLocation model.pieces selected
-    in
-        case attacker of
-          Nothing -> model
-          
-          Just n ->
-            if ( isMoveValid n selected model ) == True then
-              handleMove n defender selected model
-            else
-              resetPieceSelected {model | message <- "Invalid move"}
+      Just n ->
+        if (model.stage == started) && (n.value == bomb || n.value == flag) then
+         model
+        else
+          markSelected  n.coord model
+          |> updatePieceSelectedMessage
 
+handleClickWithSelected : (Int, Int) -> Model -> Model
+handleClickWithSelected mousePosition model =
+  -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
+  let selected = (spaceClicked mousePosition board)
+      attacker = getPieceByLocation model.pieces model.selectedPieceCoord 
+      defender = getPieceByLocation model.pieces selected
+  in
+      case attacker of
+        Nothing -> model
+
+        Just n ->
+          if ( isMoveValid n selected model ) == True then
+            handleMove n defender selected model
+          else
+            resetPieceSelected {model | message <- "Invalid move"}
 {--
-  # View
+  # VIEW
   The collage contains the game board itself.  Other elements show
   other game related info.
 --}
@@ -110,6 +118,8 @@ gameBoard model = flow down [
       ),
       gameMessage model.message
     ]
+    
+-- GAME LOGIC
 
 handleMove : Piece -> Maybe Piece -> (Int, Int) -> Model -> Model
 handleMove attacker defender moveTo model =
@@ -162,9 +172,9 @@ isMoveValid piece to model =
 
 isMoveValidForSetup : Piece -> (Int, Int) -> Model -> Bool
 isMoveValidForSetup piece (toX, toY) model =
-  if piece.color == blue && toY < 4 then
+  if piece.color == blue && toY < 4  && toX < board.rows then
     True
-  else if piece.color == red && toY > 5 then
+  else if piece.color == red && toY > 5 && toX < board.rows then
     True
   else
     False
