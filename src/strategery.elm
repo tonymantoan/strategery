@@ -1,6 +1,7 @@
 import Color exposing (..)
 import Graphics.Collage
 import Graphics.Element exposing (..)
+import Graphics.Input exposing (button)
 import Array exposing (..)
 import Mouse
 import Text
@@ -15,6 +16,7 @@ type alias Model =
     , message: String
     , stage: Int
     , turn: Color
+    , buttonMessage: String
   }
   
 setup = 1
@@ -26,9 +28,10 @@ initGame =
   { pieceIsSelected = False
     , selectedPieceCoord = (0,0)
     , pieces = blues ++ reds
-    , message = "Start Game!"
+    , message = "Place Blue Pieces"
     , stage = setup
     , turn = blue
+    , buttonMessage = "Click when done"
   }
 
 board : Board
@@ -37,19 +40,36 @@ board = makeBoard 10 10 500 500 0 0
 tray : Board
 tray = makeBoard 10 10 400 400 500 0
 
+stageButtonBox : Signal.Mailbox Int
+stageButtonBox = Signal.mailbox 0
+
+type UI = MouseClick (Int,Int) | StageButton Int
+
+userActions : Signal UI
+userActions =
+    Signal.merge
+        (Signal.map MouseClick (Signal.sampleOn Mouse.clicks Mouse.position) )
+        (Signal.map StageButton stageButtonBox.signal)
+
 -- foldp func(anyType, stateObj, stateObj) state signal
 -- create a signal of Models with foldp, which is maped to the view function
 main =
-  Signal.map view (Signal.foldp update initGame (Signal.sampleOn Mouse.clicks Mouse.position) )
+  Signal.map view (Signal.foldp update initGame userActions )
   
 -- UPDATE
 
-update : (Int,Int) -> Model -> Model
-update mousePosition  model =
-  if model.pieceIsSelected == False then
-    handleClickWithoutSelected mousePosition model
-  else
-    handleClickWithSelected mousePosition model
+--update : (Int,Int) -> Model -> Model
+update : UI -> Model -> Model
+update action model =
+  case action of
+    MouseClick mousePosition -> 
+      if model.pieceIsSelected == False then
+        handleClickWithoutSelected mousePosition model
+      else
+        handleClickWithSelected mousePosition model
+        
+    StageButton val ->
+      model
     
 selectPiece : Model -> (Int, Int) -> Maybe Piece
 selectPiece model (mouseX, mouseY) =
@@ -115,8 +135,9 @@ gameBoard model = flow down [
         (drawRows board) ++
         (placePieces (List.filter (\n -> n.inPlay) model.pieces) placePiece board) ++
         (makeNoGoSpaces noGo board)
-      ),
-      gameMessage model.message
+      )
+      , gameMessage model.message
+      , button (Signal.message stageButtonBox.address 1) model.buttonMessage
     ]
     
 -- GAME LOGIC
