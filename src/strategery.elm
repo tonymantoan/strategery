@@ -325,7 +325,7 @@ attack attacker defender model =
   if | attacker.value == miner && defender.value == bomb -> attackerWins attacker defender model
      | attacker.value == spy && defender.value == marshal -> attackerWins attacker defender model
      | attacker.value > defender.value -> attackerWins attacker defender model
-     | defender.value > attacker.value -> updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
+     | defender.value > attacker.value -> defenderWins attacker defender model
      | otherwise -> updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
                     |> updatePieces {defender | inPlay <- False, coord <- defender.traySlot}
 
@@ -334,7 +334,10 @@ attackerWins attacker defender model =
   updatePieces {attacker | coord <- defender.coord, reveal <- True} model
   |> updatePieces {defender | inPlay <- False, coord <- defender.traySlot}
 
-
+defenderWins : Piece -> Piece -> Model -> Model
+defenderWins attacker defender model =
+  updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
+  |> updatePieces {defender | reveal <- True}
 
 -- first filter the list for pieces that are inPlay
 -- then look for the one at given x,y location
