@@ -6,6 +6,7 @@ import Color exposing (..)
 type alias Piece =
   { id : Int
     , coord : (Int, Int)
+    , traySlot : (Int, Int)
     , value : Int
     , color : Color
     , inPlay : Bool
@@ -18,10 +19,11 @@ makePiece : Int -> (Int, Int) -> Int -> Color -> Piece
 makePiece pid location val col =
   { id = pid
     ,coord = location
+    , traySlot = location
     , value = val
     , color = col
     , inPlay = True
-    , reveal = True
+    , reveal = False
   }
   
 -- Definitions for values of pieces that don't have a numeric value in Statego

@@ -150,6 +150,16 @@ pieceTray model =
       (drawRows tray) ++
       (placePieces (List.filter (\n -> False == n.inPlay) model.pieces) placePiece model.turn tray)
     )
+
+{--
+  flow right (List.map (\n-> outOfPlayDisplay n ) (List.filter (\n-> False == n.inPlay) model.pieces) )
+  
+outOfPlayDisplay : Piece -> Element
+outOfPlayDisplay piece =
+  displayPiece piece.value
+  |> size (board.columnWidth // 2) (board.rowHeight // 2)
+  |> color piece.color
+--}
     
 gameBoard : Model -> Element
 gameBoard model = flow down [
@@ -315,14 +325,16 @@ attack attacker defender model =
   if | attacker.value == miner && defender.value == bomb -> attackerWins attacker defender model
      | attacker.value == spy && defender.value == marshal -> attackerWins attacker defender model
      | attacker.value > defender.value -> attackerWins attacker defender model
-     | defender.value > attacker.value -> updatePieces {attacker | inPlay <- False} model
-     | otherwise -> updatePieces {attacker | inPlay <- False} model
-                    |> updatePieces {defender | inPlay <- False}
+     | defender.value > attacker.value -> updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
+     | otherwise -> updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
+                    |> updatePieces {defender | inPlay <- False, coord <- defender.traySlot}
 
 attackerWins : Piece -> Piece -> Model -> Model
 attackerWins attacker defender model =
   updatePieces {attacker | coord <- defender.coord, reveal <- True} model
-  |> updatePieces {defender | inPlay <- False}
+  |> updatePieces {defender | inPlay <- False, coord <- defender.traySlot}
+
+
 
 -- first filter the list for pieces that are inPlay
 -- then look for the one at given x,y location

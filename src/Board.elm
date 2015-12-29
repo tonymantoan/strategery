@@ -85,7 +85,7 @@ drawRows board =
   
 placePiece: Piece -> Color.Color -> Board -> Form
 placePiece piece turn board =
-  (if turn == piece.color || piece.reveal == True then
+  (if turn == piece.color || piece.reveal == True || piece.inPlay == False then
     displayPiece piece.value
   else 
     centered (Text.fromString "") ) 
