@@ -9,6 +9,7 @@ type alias Piece =
     , value : Int
     , color : Color
     , inPlay : Bool
+    , reveal : Bool
   }
   
 -- TODO: automatically increment the pieceId
@@ -20,6 +21,7 @@ makePiece pid location val col =
     , value = val
     , color = col
     , inPlay = True
+    , reveal = True
   }
   
 -- Definitions for values of pieces that don't have a numeric value in Statego

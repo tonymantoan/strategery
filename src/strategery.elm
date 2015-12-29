@@ -122,9 +122,18 @@ handleStageButtonPress val model =
   else
     if model.turn == blue then
       {model | turn <- red, message <- "Red's turn"}
+      |> resetReveal
     else 
       {model | turn <- blue, message <- "Blue's turn"}
+      |> resetReveal
     
+resetReveal : Model -> Model
+resetReveal model =
+  {model | pieces <- ( List.map (\piece -> if piece.color == model.turn then 
+                        {piece | reveal <- False}
+                      else piece
+                     ) model.pieces )
+  }
 {--
   # VIEW
   The collage contains the game board itself.  Other elements show
@@ -312,7 +321,7 @@ attack attacker defender model =
 
 attackerWins : Piece -> Piece -> Model -> Model
 attackerWins attacker defender model =
-  updatePieces {attacker | coord <- defender.coord} model
+  updatePieces {attacker | coord <- defender.coord, reveal <- True} model
   |> updatePieces {defender | inPlay <- False}
 
 -- first filter the list for pieces that are inPlay
