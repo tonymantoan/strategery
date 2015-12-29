@@ -213,8 +213,12 @@ handleMoveForPlay attacker defender moveTo model =
     |> resetPieceSelected
               
     Just m ->
-      attack attacker m model 
-      |> resetPieceSelected
+      if attacker.color == m.color then
+        {model | message <- "No friendly fire!"}
+        |> resetPieceSelected
+      else
+        attack attacker m model 
+        |> resetPieceSelected
 
 updatePieces :  Piece -> Model -> Model
 updatePieces piece model =
