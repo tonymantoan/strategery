@@ -64,14 +64,19 @@ main =
 update : UI -> Model -> Model
 update action model =
   case action of
-    MouseClick mousePosition -> 
-      if model.pieceIsSelected == False then
+    MouseClick mousePosition ->
+      if model.stage == over then
+        model
+      else if model.pieceIsSelected == False then
         handleClickWithoutSelected mousePosition model
       else
         handleClickWithSelected mousePosition model
         
     StageButton val ->
-      handleStageButtonPress val model
+      if model.stage == over then
+        model
+      else
+        handleStageButtonPress val model
     
 selectPiece : Model -> (Int, Int) -> Maybe Piece
 selectPiece model (mouseX, mouseY) =
@@ -338,11 +343,39 @@ attackerWins : Piece -> Piece -> Model -> Model
 attackerWins attacker defender model =
   updatePieces {attacker | coord <- defender.coord, reveal <- True} model
   |> updatePieces {defender | inPlay <- False, coord <- defender.traySlot}
+  |> checkForVictory defender
 
 defenderWins : Piece -> Piece -> Model -> Model
 defenderWins attacker defender model =
   updatePieces {attacker | inPlay <- False, coord <- attacker.traySlot} model
   |> updatePieces {defender | reveal <- True}
+  |> checkForVictory attacker
+  
+checkForVictory : Piece -> Model -> Model
+checkForVictory loser model =
+  if loser.value == flag then
+    {model | stage <- over, message <- (playerString model.turn) ++ " wins by capturing the flag"}
+    |> revealAll
+  else if False == ( anyMoveables (List.filter (\n-> n.color == loser.color) model.pieces) ) then
+    {model | stage <- over, message <- (playerString model.turn) ++ " wins by eliminating all mobile pieces"}
+    |> revealAll
+  else
+    model
+
+anyMoveables : List Piece -> Bool
+anyMoveables pieces =
+  List.any (\n -> n.value > flag && n.value < bomb) pieces
+
+revealAll : Model -> Model
+revealAll model =
+  {model | pieces <- (List.map (\n -> {n | reveal <- True}) model.pieces)}
+  
+playerString : Color -> String
+playerString color =
+  if color == red then
+    "Red"
+  else
+    "Blue"
 
 -- first filter the list for pieces that are inPlay
 -- then look for the one at given x,y location
