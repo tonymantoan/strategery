@@ -17,6 +17,7 @@ type alias Model =
     , stage: Int
     , turn: Color
     , whoIsNext: Color
+    , turnComplete: Bool
     , buttonMessage: String
   }
   
@@ -33,6 +34,7 @@ initGame =
     , stage = setup
     , turn = blue
     , whoIsNext = red
+    , turnComplete = False
     , buttonMessage = "Click when done"
   }
 
@@ -65,7 +67,7 @@ update : UI -> Model -> Model
 update action model =
   case action of
     MouseClick mousePosition ->
-      if model.stage == over then
+      if model.stage == over || model.turnComplete == True then
         model
       else if model.pieceIsSelected == False then
         handleClickWithoutSelected mousePosition model
@@ -128,7 +130,7 @@ handleStageButtonPress val model =
     
   else
     if model.turn == gray then
-      {model | turn <- model.whoIsNext, buttonMessage <- "Done"}
+      {model | turn <- model.whoIsNext, turnComplete <- False, buttonMessage <- "Done"}
       |> resetReveal
 
     else if model.turn == blue then
@@ -210,6 +212,7 @@ handleMoveForPlay attacker defender moveTo model =
   case defender of
     Nothing ->
     updatePieces {attacker | coord <- moveTo} model
+    |> completeTurn
     |> resetPieceSelected
               
     Just m ->
@@ -217,8 +220,13 @@ handleMoveForPlay attacker defender moveTo model =
         {model | message <- "No friendly fire!"}
         |> resetPieceSelected
       else
-        attack attacker m model 
+        attack attacker m model
+        |> completeTurn
         |> resetPieceSelected
+        
+completeTurn : Model -> Model
+completeTurn model =
+  {model | turnComplete <- True}
 
 updatePieces :  Piece -> Model -> Model
 updatePieces piece model =
