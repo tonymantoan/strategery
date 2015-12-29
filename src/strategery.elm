@@ -16,6 +16,7 @@ type alias Model =
     , message: String
     , stage: Int
     , turn: Color
+    , whoIsNext: Color
     , buttonMessage: String
   }
   
@@ -31,6 +32,7 @@ initGame =
     , message = "Place Blue Pieces"
     , stage = setup
     , turn = blue
+    , whoIsNext = red
     , buttonMessage = "Click when done"
   }
 
@@ -117,15 +119,18 @@ handleStageButtonPress val model =
     if model.turn == blue then
       {model | turn <- red, message <- "Place Red Pieces"}
     else
-      {model | stage <- started, message <- "Red's Turn"}
+      {model | stage <- started, turn <- gray, message <- "Red's Turn", buttonMessage <- "Ready"}
     
   else
-    if model.turn == blue then
-      {model | turn <- red, message <- "Red's turn"}
+    if model.turn == gray then
+      {model | turn <- model.whoIsNext, buttonMessage <- "Done"}
       |> resetReveal
+
+    else if model.turn == blue then
+      {model | turn <- gray, whoIsNext <- red, message <- "Red's turn", buttonMessage <- "Ready"}
+
     else 
-      {model | turn <- blue, message <- "Blue's turn"}
-      |> resetReveal
+      {model | turn <- gray, whoIsNext <- blue, message <- "Blue's turn", buttonMessage <- "Ready"}
     
 resetReveal : Model -> Model
 resetReveal model =
