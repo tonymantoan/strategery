@@ -5,6 +5,7 @@ import Text
 import Graphics.Element exposing (Element, size, centered, color, show)
 import Graphics.Collage exposing (..)
 import GamePieces exposing (Piece, flag, spy, bomb)
+import Utils exposing (..)
 
 type alias Board =
   { columns : Int
@@ -130,3 +131,17 @@ makeNoGoSpaces noGoList board =
                   |> filled Color.black
                   |> move (calcMove n board)
            ) noGoList
+           
+isNotInNoGoZone : (Int, Int) -> Bool
+isNotInNoGoZone coord =
+  List.isEmpty ( List.filter (\n -> if n == coord then True else False) noGo )
+    
+hasClearPath : (Int, Int) -> (Int, Int) -> List Piece -> Bool
+hasClearPath (fromX, fromY) (toX, toY) pieces =
+  if isWithinOne (fromX, fromY) (toX, toY) then
+    True
+  else
+    if fromX == toX then
+      isBlocked ( checkYaxisBlock fromX fromY toY ((getInPlayCoords pieces) ++ noGo) )
+    else
+      isBlocked ( checkXaxisBlock fromY fromX toX ((getInPlayCoords pieces) ++ noGo) )
