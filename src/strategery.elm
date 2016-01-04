@@ -35,11 +35,12 @@ userActions =
         (Signal.map StageButton stageButtonBox.signal)
 
 -- foldp func(anyType, stateObj, stateObj) state signal
--- create a signal of Models with foldp, which is maped to the view function
+{-| Create a signal of Models with foldp, which is maped to the view function.
+-}
 main =
   Signal.map view (Signal.foldp update initGame userActions )
   
--- UPDATE
+-- # UPDATE
 
 update : UI -> Model -> Model
 update action model =
@@ -57,14 +58,21 @@ update action model =
         model
       else
         handleStageButtonPress val model
-    
+
+{-| Given a model and a coordinate, determine which piece, if any is at that
+location.
+-}
 selectPiece : Model -> (Int, Int) -> Maybe Piece
 selectPiece model (mouseX, mouseY) =
   if (model.stage == setup) && mouseX > board.width then
    Utils.getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) tray)
   else
     Utils.getPieceByLocation (List.filter (\n -> n.color == model.turn) model.pieces) (spaceClicked (mouseX, mouseY) board)
-    
+
+{- When the user has not selected piece to move, this function will check their
+mouse clicks until they click on a piece.  Then that piece becomes the piece
+that will be moved.
+-}
 handleClickWithoutSelected : (Int, Int) -> Model -> Model
 handleClickWithoutSelected mousePosition model =
   -- if no piece is selected: get the clicked piece and make that the selection, return the model as is
@@ -82,6 +90,11 @@ handleClickWithoutSelected mousePosition model =
           markSelected  n.coord model
           |> updatePieceSelectedMessage
 
+{- When the user already has selected a piece to move, this function will use
+their next click to determine where the piece should be moved.  If the move
+turns out to be invalid, their turn will be reset and their will not be a piece
+selected to move.
+-}
 handleClickWithSelected : (Int, Int) -> Model -> Model
 handleClickWithSelected mousePosition model =
   -- if a piece is already selected: get the clicked piece this time, mark the other space as 0, make this space = the higher of the two
@@ -97,7 +110,9 @@ handleClickWithSelected mousePosition model =
             handleMove n defender selected model
           else
             resetPieceSelected {model | message <- "Invalid move"}
-            
+
+{-| Advance the game stage when the stage button is pressed.
+-}
 handleStageButtonPress : Int -> Model -> Model
 handleStageButtonPress val model =
   if model.stage == setup then
@@ -116,7 +131,9 @@ handleStageButtonPress val model =
 
     else 
       {model | turn <- gray, whoIsNext <- blue, message <- "Blue's turn", buttonMessage <- "Ready"}
-    
+
+{-| Reset wich pieces will be shown in preparation for the next turn.
+-}
 resetReveal : Model -> Model
 resetReveal model =
   {model | pieces <- ( List.map (\piece -> if piece.color == model.turn then 
@@ -125,20 +142,23 @@ resetReveal model =
                      ) model.pieces )
   }
   
--- mark the given coordinate as the selected piece
+{-| Mark the given coordinate as the selected piece.
+-}
 markSelected : (Int, Int) -> Model -> Model
 markSelected (x,y) model =
    { model | pieceIsSelected <- True
            , selectedPieceCoord <- (x,y) }
 
-{--
-  # VIEW
-  The collage contains the game board itself.  Other elements show
-  other game related info.
---}
+{-| # VIEW
+
+The collage contains the game board itself.  Other elements show other game
+related info.
+-}
 view : Model -> Element    
 view model = flow right [ (gameBoard model), (pieceTray model) ]
 
+{-| Create the tray for out of play pieces.
+-}
 pieceTray : Model -> Element
 pieceTray model =
   Graphics.Collage.collage tray.width tray.height
@@ -148,16 +168,8 @@ pieceTray model =
       (placePieces (List.filter (\n -> False == n.inPlay) model.pieces) placePiece model.turn tray)
     )
 
-{--
-  flow right (List.map (\n-> outOfPlayDisplay n ) (List.filter (\n-> False == n.inPlay) model.pieces) )
-  
-outOfPlayDisplay : Piece -> Element
-outOfPlayDisplay piece =
-  displayPiece piece.value
-  |> size (board.columnWidth // 2) (board.rowHeight // 2)
-  |> color piece.color
---}
-    
+{-| Create the game board itself, with all the pieces on it.
+-}
 gameBoard : Model -> Element
 gameBoard model = flow down [
   Graphics.Collage.collage board.width board.height
@@ -170,7 +182,9 @@ gameBoard model = flow down [
       , gameMessage model.message
       , button (Signal.message stageButtonBox.address 1) model.buttonMessage
     ]
-  
+
+{-| Create a visual element to show users game info.
+-}
 gameMessage: String -> Element
 gameMessage message =
   Text.fromString message
